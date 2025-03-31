@@ -25,7 +25,7 @@ This project implements an MCP server that allows Cursor (or any MCP-compatible 
 ### Install from source
 
    ```bash
-   go install github.com/nazar256/user-input-mcp@latest
+   go install github.com/nazar256/user-input-mcp/cmd/user-input-mcp@latest
    ```
 
 ## Usage with Cursor
