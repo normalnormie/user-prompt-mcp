@@ -1,4 +1,4 @@
-# User Input MCP
+# User Prompt MCP
 
 A Model Context Protocol (MCP) server for Cursor that enables requesting user input during generation. This is mostly AI-generated code.
 
@@ -25,7 +25,7 @@ This project implements an MCP server that allows Cursor (or any MCP-compatible 
 ### Install from source
 
    ```bash
-   go install github.com/nazar256/user-input-mcp/cmd/user-input-mcp@latest
+   go install github.com/nazar256/user-prompt-mcp/cmd/user-prompt-mcp@latest
    ```
 
 ## Usage with Cursor
@@ -36,7 +36,7 @@ This project implements an MCP server that allows Cursor (or any MCP-compatible 
 {
   "mcpServers": {
     "prompt": {
-      "command": "user-input-mcp"
+      "command": "user-prompt-mcp"
     }
   }
 }

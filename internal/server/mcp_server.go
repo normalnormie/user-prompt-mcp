@@ -8,12 +8,12 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	"github.com/nazar256/user-input-mcp/pkg/prompt"
+	"github.com/nazar256/user-prompt-mcp/pkg/prompt"
 )
 
 const (
 	// ServerName is the name of the MCP server
-	ServerName = "User Input MCP"
+	ServerName = "User Prompt MCP"
 	// ServerVersion is the version of the MCP server
 	ServerVersion = "1.0.0"
 	// UserPromptToolName is the name of the user prompt tool

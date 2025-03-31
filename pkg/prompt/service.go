@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/nazar256/user-input-mcp/pkg/gui"
+	"github.com/nazar256/user-prompt-mcp/pkg/gui"
 )
 
 // Service handles user input prompts

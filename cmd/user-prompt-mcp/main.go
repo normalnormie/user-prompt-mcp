@@ -6,16 +6,16 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/nazar256/user-input-mcp/internal/server"
-	"github.com/nazar256/user-input-mcp/pkg/gui"
-	"github.com/nazar256/user-input-mcp/pkg/prompt"
+	"github.com/nazar256/user-prompt-mcp/internal/server"
+	"github.com/nazar256/user-prompt-mcp/pkg/gui"
+	"github.com/nazar256/user-prompt-mcp/pkg/prompt"
 )
 
 func main() {
 	// Set up logging
-	log.SetPrefix("[UserInputMCP] ")
+	log.SetPrefix("[UserPromptMCP] ")
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Println("Starting User Input MCP Server...")
+	log.Println("Starting User Prompt MCP Server...")
 
 	// Check for required dependencies
 	if err := gui.CheckDependencies(); err != nil {

@@ -1,13 +1,13 @@
 .PHONY: build test clean fmt vet lint all install
 
-BINARY_NAME=user-input-mcp
+BINARY_NAME=user-prompt-mcp
 BUILD_DIR=bin
 
 all: test build
 
 build:
 	@echo "Building..."
-	@go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/user-input-mcp
+	@go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/user-prompt-mcp
 
 test:
 	@echo "Testing..."
@@ -34,7 +34,7 @@ lint:
 	fi
 
 install:
-	go install ./cmd/user-input-mcp
+	go install ./cmd/user-prompt-mcp
 
 run: build
-	go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/user-input-mcp
+	go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/user-prompt-mcp

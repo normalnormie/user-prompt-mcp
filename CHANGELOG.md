@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2025-04-10
 
 ### Added
-- Initial release of the User Input MCP
+- Initial release of the User Prompt MCP
 - Implemented user_prompt tool for requesting input during generation
 - Cross-platform GUI support for Linux and macOS
 - Timeout handling for user prompts

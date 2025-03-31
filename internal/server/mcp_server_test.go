@@ -4,16 +4,16 @@ import (
 	"context"
 	"testing"
 
-	"github.com/nazar256/user-input-mcp/pkg/prompt"
+	"github.com/nazar256/user-prompt-mcp/pkg/prompt"
 )
 
-// MockPromptService mocks the prompt.Service for testing
+// MockPromptService is a mock implementation of the prompt service
 type MockPromptService struct {
 	InputResponse string
 	InputError    error
 }
 
-// PromptForInput is a mock implementation of the PromptForInput method
+// PromptForInput is a mock implementation that returns predefined responses
 func (m *MockPromptService) PromptForInput(ctx context.Context, opts prompt.PromptOptions) (string, error) {
 	return m.InputResponse, m.InputError
 }
@@ -32,16 +32,15 @@ func TestNewMCPServer(t *testing.T) {
 	}
 }
 
-func TestRegisterUserPromptTool(t *testing.T) {
-	// Create a prompt service
-	mockService := &prompt.Service{}
+func TestMCPServer_RegisterUserPromptTool(t *testing.T) {
+	// Create a mock prompt service that satisfies the prompt.Service interface
+	mockPrompt := &prompt.Service{}
 
-	// Create a new MCP server
-	server := NewMCPServer(mockService)
+	// Create an MCP server with the mock prompt service
+	mcpServer := NewMCPServer(mockPrompt)
 
-	// Register the user prompt tool
-	server.RegisterUserPromptTool()
+	// Register the user_prompt tool
+	mcpServer.RegisterUserPromptTool()
 
-	// Unfortunately we can't directly access the tools list in the MCP server
-	// So we'll just verify that the method doesn't panic
+	// We're just testing that the method runs without error
 }

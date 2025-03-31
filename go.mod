@@ -1,4 +1,4 @@
-module github.com/nazar256/user-input-mcp
+module github.com/nazar256/user-prompt-mcp
 
 go 1.24.1
 
