@@ -1,0 +1,10 @@
+# These owners will be the default owners for everything in the repo
+* @yn
+
+# Go source files
+*.go @yn
+
+# Specific directories
+/cmd/ @yn
+/pkg/ @yn
+/internal/ @yn 
