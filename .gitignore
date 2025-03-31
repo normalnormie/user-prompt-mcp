@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-user-input-mcp
+/user-input-mcp
 bin/
 
 # Test binary, built with `go test -c`
