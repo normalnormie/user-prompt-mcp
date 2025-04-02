@@ -75,7 +75,19 @@ We created a cross-platform GUI implementation that uses:
 It displays a simple dialog box with a text input field.
 
 ### Timeout Handling
-The prompt service includes timeout handling to prevent the MCP server from hanging indefinitely if the user doesn't respond. The default timeout is 5 minutes but can be customized.
+The prompt service includes timeout handling to prevent the MCP server from hanging indefinitely if the user doesn't respond. The default timeout is 20 minutes and can be customized through:
+- Command line flag: `--timeout <seconds>`
+- Environment variable: `USER_PROMPT_TIMEOUT=<seconds>`
+
+For example:
+```bash
+# Using command line flag
+user-prompt-mcp --timeout 600  # Set timeout to 10 minutes
+
+# Using environment variable
+export USER_PROMPT_TIMEOUT=1800  # Set timeout to 30 minutes
+user-prompt-mcp
+```
 
 ## Conclusion
 We've successfully implemented a minimal but functional MCP server for user input during Cursor generation. The implementation is cross-platform, lightweight, and follows the MCP specification.

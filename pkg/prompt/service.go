@@ -28,7 +28,7 @@ type ServiceOptions struct {
 func DefaultOptions() ServiceOptions {
 	return ServiceOptions{
 		Dialog:     gui.NewZenityDialog(),
-		Timeout:    time.Minute * 5, // 5 minute default timeout
+		Timeout:    time.Minute * 20, // 20 minute default timeout
 		DefaultMsg: "Cursor is requesting additional input",
 	}
 }

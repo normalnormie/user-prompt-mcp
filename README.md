@@ -46,6 +46,23 @@ This project implements an MCP server that allows Cursor (or any MCP-compatible 
 
 4. Add to global rules something like: "Important - do not finish responding until explicitly told to do so, instead always use MCP `input_user_prompt` and wait for response in all cases, either you feel stuck, you have question or you finished work on a prompt - always communicate with the user using this MCP."
 
+### Configuration
+
+The server can be configured using command-line flags or environment variables:
+
+#### Timeout Configuration
+By default, the server will wait 20 minutes for user input before timing out. You can customize this timeout using:
+
+- Command line flag: `--timeout <seconds>`
+  ```bash
+  user-prompt-mcp --timeout 600  # Set timeout to 10 minutes
+  ```
+- Environment variable: `USER_PROMPT_TIMEOUT=<seconds>`
+  ```bash
+  export USER_PROMPT_TIMEOUT=1800  # Set timeout to 30 minutes
+  user-prompt-mcp
+  ```
+
 Now when using Cursor, the AI can request additional input from you without ending its generation.
 
 ## License

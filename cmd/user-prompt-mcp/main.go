@@ -1,10 +1,13 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/nazar256/user-prompt-mcp/internal/server"
 	"github.com/nazar256/user-prompt-mcp/pkg/gui"
@@ -17,14 +20,33 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Println("Starting User Prompt MCP Server...")
 
+	// Parse command line flags
+	timeoutSeconds := flag.Int("timeout", 0, "Timeout in seconds for user input (default: 1200)")
+	flag.Parse()
+
+	// Check environment variable for timeout
+	if envTimeout := os.Getenv("USER_PROMPT_TIMEOUT"); envTimeout != "" {
+		if seconds, err := strconv.Atoi(envTimeout); err == nil {
+			timeoutSeconds = &seconds
+		} else {
+			log.Printf("Warning: Invalid USER_PROMPT_TIMEOUT value: %s", envTimeout)
+		}
+	}
+
 	// Check for required dependencies
 	if err := gui.CheckDependencies(); err != nil {
 		log.Fatalf("Dependency check failed: %v", err)
 	}
 
-	// Create a prompt service with default options
-	promptService := prompt.NewService(prompt.DefaultOptions())
-	log.Println("Prompt service initialized")
+	// Create prompt service options
+	opts := prompt.DefaultOptions()
+	if *timeoutSeconds > 0 {
+		opts.Timeout = time.Duration(*timeoutSeconds) * time.Second
+	}
+
+	// Create a prompt service with configured options
+	promptService := prompt.NewService(opts)
+	log.Printf("Prompt service initialized with timeout: %v", opts.Timeout)
 
 	// Create MCP server
 	mcpServer := server.NewMCPServer(promptService)

@@ -11,5 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of the User Prompt MCP
 - Implemented user_prompt tool for requesting input during generation
 - Cross-platform GUI support for Linux and macOS
-- Timeout handling for user prompts
+- Timeout handling for user prompts (default: 20 minutes)
+- Configurable timeout via command-line flag (--timeout) and environment variable (USER_PROMPT_TIMEOUT)
 - Comprehensive documentation and tests 
