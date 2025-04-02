@@ -44,6 +44,8 @@ We're implementing an MCP server in Golang that will allow Cursor to request use
 - [x] Write comprehensive README
 - [x] Document configuration options
 - [x] Create installation/usage instructions
+- [x] Set up GitHub Actions for cross-platform binary distribution
+- [x] Create installation scripts for Linux, macOS, and Windows
 
 ## Technical Decisions
 
@@ -88,6 +90,16 @@ user-prompt-mcp --timeout 600  # Set timeout to 10 minutes
 export USER_PROMPT_TIMEOUT=1800  # Set timeout to 30 minutes
 user-prompt-mcp
 ```
+
+### Binary Distribution
+We've implemented an automated build and release process that:
+1. Cross-compiles binaries for multiple platforms (Linux, macOS, Windows) and architectures (amd64, arm64)
+2. Attaches these binaries to GitHub releases
+3. Provides installation scripts for easy installation without requiring Go:
+   - `install.sh` for Linux and macOS
+   - `install.bat` for Windows
+
+This makes the tool accessible to users who don't have Go installed on their systems.
 
 ## Conclusion
 We've successfully implemented a minimal but functional MCP server for user input during Cursor generation. The implementation is cross-platform, lightweight, and follows the MCP specification.

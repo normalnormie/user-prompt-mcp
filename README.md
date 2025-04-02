@@ -17,16 +17,39 @@ This project implements an MCP server that allows Cursor (or any MCP-compatible 
 
 ### Prerequisites
 
-- Go 1.18 or higher
 - For GUI functionality:
   - Linux: zenity
-  - macOS: osascript (not tested)
+  - macOS: osascript (built-in)
+
+### Quick Install (Recommended)
+
+The easiest way to install user-prompt-mcp is using our installation script, which automatically downloads the appropriate binary for your system:
+
+```bash
+# Install the latest version
+curl -sSL https://raw.githubusercontent.com/nazar256/user-prompt-mcp/main/install.sh | bash
+
+# Or install a specific version
+curl -sSL https://raw.githubusercontent.com/nazar256/user-prompt-mcp/main/install.sh | bash -s -- -v v1.0.0
+```
+
+The installation script will:
+- Detect your OS and architecture (Linux or macOS, amd64 or arm64)
+- Download the appropriate pre-compiled binary
+- Install it to a suitable directory in your PATH
+- Make it executable
 
 ### Install from source
 
-   ```bash
-   go install github.com/nazar256/user-prompt-mcp/cmd/user-prompt-mcp@latest
-   ```
+If you prefer to build from source (requires Go 1.18+):
+
+```bash
+go install github.com/nazar256/user-prompt-mcp/cmd/user-prompt-mcp@latest
+```
+
+### Manual Installation
+
+You can also download pre-compiled binaries directly from the [Releases page](https://github.com/nazar256/user-prompt-mcp/releases).
 
 ## Usage with Cursor
 
