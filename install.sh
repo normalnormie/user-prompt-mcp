@@ -47,14 +47,8 @@ has_sudo() {
         if sudo -n true 2>/dev/null; then
             return 0 # User has sudo without password
         else
-            # Ask for password
-            echo "Some installation locations require sudo access."
-            echo "Please enter your password if prompted."
-            if sudo -v 2>/dev/null; then
-                return 0 # User can use sudo with password
-            else
-                return 1 # User cannot use sudo
-            fi
+            # Sudo requires password - only prompt if needed
+            return 0 # Return success but will only prompt later if actually needed
         fi
     else
         return 1 # sudo command not found
@@ -80,39 +74,50 @@ find_install_dir() {
         fi
     fi
     
-    # System paths (may require sudo)
-    if [ "$CAN_USE_SUDO" = "true" ]; then
-        if [ "$OS" = "darwin" ]; then
-            # macOS system paths
-            INSTALL_DIRS+=("/usr/local/bin")
-        else
-            # Linux system paths
-            INSTALL_DIRS+=("/usr/local/bin")
-            INSTALL_DIRS+=("/usr/bin")
-        fi
-    fi
-    
-    # Check each directory
+    # Check each user directory first
     for DIR in "${INSTALL_DIRS[@]}"; do
         # Create directory if it doesn't exist
         if [ ! -d "$DIR" ]; then
-            if [ "$CAN_USE_SUDO" = "true" ] && [[ "$DIR" == "/usr"* ]]; then
-                sudo mkdir -p "$DIR" || continue
-            else
-                mkdir -p "$DIR" || continue
-            fi
+            mkdir -p "$DIR" || continue
         fi
         
         # Check if directory is writable
         if [ -w "$DIR" ]; then
             echo "$DIR"
             return 0
-        elif [ "$CAN_USE_SUDO" = "true" ] && [[ "$DIR" == "/usr"* ]]; then
-            # System directory with sudo
-            echo "$DIR"
-            return 0
         fi
     done
+    
+    # If no home directory is available/writable, try system directories
+    if [ "$CAN_USE_SUDO" = "true" ]; then
+        # Only now do we prompt for sudo password if needed
+        echo "No writable user directories found. Some installation locations require sudo access."
+        echo "Please enter your password if prompted."
+        if ! sudo -v 2>/dev/null; then
+            echo "Cannot use sudo. Falling back to user directory."
+        else
+            # System paths that require sudo
+            local SYSTEM_DIRS=()
+            if [ "$OS" = "darwin" ]; then
+                # macOS system paths
+                SYSTEM_DIRS+=("/usr/local/bin")
+            else
+                # Linux system paths
+                SYSTEM_DIRS+=("/usr/local/bin")
+                SYSTEM_DIRS+=("/usr/bin")
+            fi
+            
+            for DIR in "${SYSTEM_DIRS[@]}"; do
+                # Create directory if it doesn't exist
+                if [ ! -d "$DIR" ]; then
+                    sudo mkdir -p "$DIR" || continue
+                fi
+                
+                echo "$DIR"
+                return 0
+            done
+        fi
+    fi
     
     # If we got here, create and use ~/.local/bin as fallback
     mkdir -p "$HOME/.local/bin"
