@@ -3,6 +3,12 @@ name: Release Binaries
 on:
   release:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag to build for (e.g., v1.0.1)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -23,6 +29,16 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
+
+      - name: Determine tag to use
+        id: get_tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          fi
+          echo "Using tag: ${{ env.TAG_NAME }}"
 
       - name: Build binary
         env:
@@ -47,13 +63,13 @@ jobs:
           fi
 
       - name: Upload binary as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: binary-${{ matrix.goos }}-${{ matrix.goarch }}
           path: ./bin/user-prompt-mcp-${{ matrix.goos }}-${{ matrix.goarch }}.gz
           
       - name: Upload checksum as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: checksum-${{ matrix.goos }}-${{ matrix.goarch }}
           path: ./bin/user-prompt-mcp-${{ matrix.goos }}-${{ matrix.goarch }}.sha256
@@ -76,8 +92,26 @@ jobs:
           mkdir -p ./release-files
           find ./artifacts -type f -name "user-prompt-mcp-*" -exec cp {} ./release-files/ \;
           find ./release-files -type f | sort
-        
-      - name: Attach artifacts to release
+      
+      - name: Determine tag to use
+        id: get_tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+          fi
+          echo "Using tag: ${{ env.TAG_NAME }}"
+          
+      - name: Attach artifacts to release if triggered by release
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v1
         with:
+          files: ./release-files/*
+          
+      - name: Attach artifacts to release if triggered manually
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.TAG_NAME }}
           files: ./release-files/* 
