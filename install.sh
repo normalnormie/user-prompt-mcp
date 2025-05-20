@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+CLIENT_BINARY_NAME="user-prompt-mcp"
+SERVER_BINARY_NAME="user-prompt-server"
+
 # Print error and exit
 error() {
     echo "Error: $1" >&2
@@ -136,69 +139,70 @@ download_binary() {
     local VERSION=$1
     local PLATFORM=$2
     local OUTPUT_DIR=$3
-    local BINARY_NAME="user-prompt-mcp"
+    local TARGET_BINARY_NAME=$4 # Added parameter for the binary name
     local TEMP_DIR=$(mktemp -d)
     
-    echo "Downloading user-prompt-mcp $VERSION for $PLATFORM..."
+    echo "Downloading $TARGET_BINARY_NAME $VERSION for $PLATFORM..."
     
     # Set the file extension based on OS
-    local URL="https://github.com/nazar256/user-prompt-mcp/releases/download/$VERSION/${BINARY_NAME}-${PLATFORM}.gz"
-    local CHECKSUM_URL="https://github.com/nazar256/user-prompt-mcp/releases/download/$VERSION/${BINARY_NAME}-${PLATFORM}.sha256"
+    local URL="https://github.com/nazar256/user-prompt-mcp/releases/download/$VERSION/${TARGET_BINARY_NAME}-${PLATFORM}.gz"
+    local CHECKSUM_URL="https://github.com/nazar256/user-prompt-mcp/releases/download/$VERSION/${TARGET_BINARY_NAME}-${PLATFORM}.sha256"
     
     # Download binary and checksum
-    curl -L "$URL" -o "$TEMP_DIR/$BINARY_NAME.gz" || error "Failed to download binary"
-    curl -L "$CHECKSUM_URL" -o "$TEMP_DIR/$BINARY_NAME.sha256" || error "Failed to download checksum"
+    curl -L "$URL" -o "$TEMP_DIR/$TARGET_BINARY_NAME.gz" || error "Failed to download $TARGET_BINARY_NAME binary"
+    curl -L "$CHECKSUM_URL" -o "$TEMP_DIR/$TARGET_BINARY_NAME.sha256" || error "Failed to download $TARGET_BINARY_NAME checksum"
     
     # Decompress binary
-    echo "Decompressing binary..."
-    gzip -d "$TEMP_DIR/$BINARY_NAME.gz" || error "Failed to decompress binary"
+    echo "Decompressing $TARGET_BINARY_NAME..."
+    gzip -d "$TEMP_DIR/$TARGET_BINARY_NAME.gz" || error "Failed to decompress $TARGET_BINARY_NAME binary"
     
     # Verify checksum
     cd "$TEMP_DIR"
     if command -v sha256sum > /dev/null; then
         # Extract just the hash from the checksum file (in case it includes filename)
-        EXPECTED_HASH=$(cat "$BINARY_NAME.sha256" | awk '{print $1}')
-        ACTUAL_HASH=$(sha256sum "$BINARY_NAME" | awk '{print $1}')
+        EXPECTED_HASH=$(cat "$TARGET_BINARY_NAME.sha256" | awk '{print $1}')
+        ACTUAL_HASH=$(sha256sum "$TARGET_BINARY_NAME" | awk '{print $1}')
         
         if [[ "$EXPECTED_HASH" != "$ACTUAL_HASH" ]]; then
-            error "Checksum verification failed"
+            error "Checksum verification failed for $TARGET_BINARY_NAME"
         fi
     elif command -v shasum > /dev/null; then
         # macOS uses shasum instead of sha256sum
-        EXPECTED_HASH=$(cat "$BINARY_NAME.sha256" | awk '{print $1}')
-        ACTUAL_HASH=$(shasum -a 256 "$BINARY_NAME" | awk '{print $1}')
+        EXPECTED_HASH=$(cat "$TARGET_BINARY_NAME.sha256" | awk '{print $1}')
+        ACTUAL_HASH=$(shasum -a 256 "$TARGET_BINARY_NAME" | awk '{print $1}')
         
         if [[ "$EXPECTED_HASH" != "$ACTUAL_HASH" ]]; then
-            error "Checksum verification failed"
+            error "Checksum verification failed for $TARGET_BINARY_NAME"
         fi
     else
-        echo "Warning: Cannot verify checksum, neither sha256sum nor shasum found"
+        echo "Warning: Cannot verify checksum for $TARGET_BINARY_NAME, neither sha256sum nor shasum found"
     fi
     
     # Make binary executable
-    chmod +x "$BINARY_NAME"
+    chmod +x "$TARGET_BINARY_NAME"
     
     # Install binary
-    DEST_PATH="$OUTPUT_DIR/$BINARY_NAME"
+    DEST_PATH="$OUTPUT_DIR/$TARGET_BINARY_NAME"
     if [[ -w "$OUTPUT_DIR" ]]; then
-        echo "Installing to $DEST_PATH..."
-        mv "$BINARY_NAME" "$DEST_PATH"
+        echo "Installing $TARGET_BINARY_NAME to $DEST_PATH..."
+        mv "$TARGET_BINARY_NAME" "$DEST_PATH"
     else
-        echo "Installing to $DEST_PATH (requires sudo)..."
-        sudo mv "$BINARY_NAME" "$DEST_PATH"
+        echo "Installing $TARGET_BINARY_NAME to $DEST_PATH (requires sudo)..."
+        sudo mv "$TARGET_BINARY_NAME" "$DEST_PATH"
     fi
     
     # Cleanup
     cd - > /dev/null
     rm -rf "$TEMP_DIR"
     
-    echo "Successfully installed user-prompt-mcp to $DEST_PATH"
+    echo "Successfully installed $TARGET_BINARY_NAME to $DEST_PATH"
 }
 
 # Main installation procedure
 main() {
     # Parse command line arguments
     local VERSION="latest"
+    local COMPONENT_TO_INSTALL="all" # Default component is now 'all'
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -206,11 +210,16 @@ main() {
                 VERSION="$2"
                 shift 2
                 ;;
+            --component)
+                COMPONENT_TO_INSTALL="$2"
+                shift 2
+                ;;
             -h|--help)
                 echo "Usage: ./install.sh [options]"
                 echo "Options:"
-                echo "  -v, --version VERSION  Install specific version (default: latest)"
-                echo "  -h, --help             Show this help message"
+                echo "  -v, --version VERSION    Install specific version (default: latest)"
+                echo "  --component NAME         Specify component to install: 'client', 'server', or 'all' (default: all)"
+                echo "  -h, --help               Show this help message"
                 exit 0
                 ;;
             *)
@@ -226,7 +235,7 @@ main() {
     
     [[ -z "$VERSION" ]] && error "Could not determine version to install"
     
-    echo "Installing user-prompt-mcp $VERSION..."
+    echo "Preparing to install version $VERSION..."
     
     # Detect platform
     PLATFORM=$(detect_platform)
@@ -242,12 +251,41 @@ main() {
     # Find suitable installation directory
     INSTALL_DIR=$(find_install_dir "$OS" "$CAN_USE_SUDO")
     echo "Selected installation directory: $INSTALL_DIR"
+
+    local BINARIES_TO_INSTALL=()
+    case "$COMPONENT_TO_INSTALL" in
+        client)
+            BINARIES_TO_INSTALL+=("$CLIENT_BINARY_NAME")
+            ;;
+        server)
+            BINARIES_TO_INSTALL+=("$SERVER_BINARY_NAME")
+            ;;
+        all)
+            BINARIES_TO_INSTALL+=("$CLIENT_BINARY_NAME")
+            BINARIES_TO_INSTALL+=("$SERVER_BINARY_NAME")
+            ;;
+        *)
+            error "Invalid component: $COMPONENT_TO_INSTALL. Choose 'client', 'server', or 'all'."
+            ;;
+    esac
+
+    local INSTALLED_SUCCESSFULLY=()
+    for BINARY_NAME in "${BINARIES_TO_INSTALL[@]}"; do
+        echo "--- Installing $BINARY_NAME $VERSION ---"
+        download_binary "$VERSION" "$PLATFORM" "$INSTALL_DIR" "$BINARY_NAME"
+        INSTALLED_SUCCESSFULLY+=("$BINARY_NAME")
+    done
     
-    # Download and install binary
-    download_binary "$VERSION" "$PLATFORM" "$INSTALL_DIR"
-    
-    echo "user-prompt-mcp $VERSION has been successfully installed!"
-    echo "You can now run it with: user-prompt-mcp"
+    if [ ${#INSTALLED_SUCCESSFULLY[@]} -gt 0 ]; then
+        echo ""
+        echo "Successfully installed:"
+        for BINARY_NAME in "${INSTALLED_SUCCESSFULLY[@]}"; do
+            echo "  - $BINARY_NAME $VERSION (at $INSTALL_DIR/$BINARY_NAME)"
+            echo "    You can now run it with: $BINARY_NAME"
+        done
+    else
+        echo "No components were installed."
+    fi
 }
 
 main "$@" 

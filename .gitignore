@@ -28,3 +28,6 @@ go.work
 # OS specific files
 .DS_Store
 Thumbs.db 
+
+# Cursor
+.cursorrules

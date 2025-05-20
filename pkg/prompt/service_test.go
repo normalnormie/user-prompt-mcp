@@ -14,12 +14,17 @@ type MockDialogProvider struct {
 }
 
 // ShowInputDialog implements the DialogProvider interface
-func (m *MockDialogProvider) ShowInputDialog(prompt string, title string) (string, error) {
+func (m *MockDialogProvider) ShowInputDialog(ctx context.Context, prompt string, title string) (string, error) {
 	// Simulate delay to test timeout
 	if m.DelayDuration > 0 {
 		time.Sleep(m.DelayDuration)
 	}
 	return m.Response, m.Error
+}
+
+// CheckDependencies implements the DialogProvider interface for the mock
+func (m *MockDialogProvider) CheckDependencies() error {
+	return nil
 }
 
 func TestNewService(t *testing.T) {

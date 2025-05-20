@@ -9,6 +9,8 @@ import (
 	"github.com/nazar256/user-prompt-mcp/pkg/gui"
 )
 
+const defaultPromptServerURL = "http://localhost:3030"
+
 // Service handles user input prompts
 type Service struct {
 	dialog     gui.DialogProvider
@@ -27,7 +29,7 @@ type ServiceOptions struct {
 // DefaultOptions returns the default options for the prompt service
 func DefaultOptions() ServiceOptions {
 	return ServiceOptions{
-		Dialog:     gui.NewZenityDialog(),
+		Dialog:     gui.NewRemoteDialog(defaultPromptServerURL),
 		Timeout:    time.Minute * 20, // 20 minute default timeout
 		DefaultMsg: "Cursor is requesting additional input",
 	}
@@ -36,7 +38,7 @@ func DefaultOptions() ServiceOptions {
 // NewService creates a new prompt service with the given options
 func NewService(opts ServiceOptions) *Service {
 	if opts.Dialog == nil {
-		opts.Dialog = gui.NewZenityDialog()
+		opts.Dialog = gui.NewRemoteDialog(defaultPromptServerURL)
 	}
 	if opts.Timeout == 0 {
 		opts.Timeout = DefaultOptions().Timeout
@@ -77,7 +79,7 @@ func (s *Service) PromptForInput(ctx context.Context, opts PromptOptions) (strin
 		opts.Timeout = s.timeout
 	}
 
-	// Create a timeout context
+	// Create a timeout context based on the provided context and the prompt timeout
 	timeoutCtx, cancel := context.WithTimeout(ctx, opts.Timeout)
 	defer cancel()
 
@@ -89,7 +91,7 @@ func (s *Service) PromptForInput(ctx context.Context, opts PromptOptions) (strin
 
 	// Run the dialog in a goroutine
 	go func() {
-		result, err := s.dialog.ShowInputDialog(opts.Prompt, opts.Title)
+		result, err := s.dialog.ShowInputDialog(timeoutCtx, opts.Prompt, opts.Title)
 		resultCh <- struct {
 			result string
 			err    error
@@ -104,6 +106,10 @@ func (s *Service) PromptForInput(ctx context.Context, opts PromptOptions) (strin
 		}
 		return response.result, nil
 	case <-timeoutCtx.Done():
+		// Check if the original context was cancelled or if it was our timeout
+		if ctx.Err() != nil {
+			return "", fmt.Errorf("prompt cancelled: %w", ctx.Err())
+		}
 		return "", fmt.Errorf("prompt timed out after %v", opts.Timeout)
 	}
 }

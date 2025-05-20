@@ -19,8 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        goos: [linux, darwin]
+        goos: [linux, darwin, windows]
         goarch: [amd64, arm64]
+        binary_name: [user-prompt-mcp, user-prompt-server]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,39 +41,58 @@ jobs:
           fi
           echo "Using tag: ${{ env.TAG_NAME }}"
 
-      - name: Build binary
+      - name: Build binary (${{ matrix.binary_name }} for ${{ matrix.goos }}/${{ matrix.goarch }})
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          BINARY_NAME: ${{ matrix.binary_name }}
         run: |
           mkdir -p ./bin
-          BINARY_NAME=user-prompt-mcp
-          OUTPUT_FILE=${BINARY_NAME}-${{ matrix.goos }}-${{ matrix.goarch }}
+          OUTPUT_BASE_NAME=${BINARY_NAME}-${{ matrix.goos }}-${{ matrix.goarch }}
+          OUTPUT_FILE_NO_EXT=./bin/${OUTPUT_BASE_NAME}
+          OUTPUT_FILE_EXE=${OUTPUT_FILE_NO_EXT}.exe
+
+          CMD_PATH=./cmd/${BINARY_NAME}/
+
+          echo "Building ${BINARY_NAME} for ${GOOS}/${GOARCH} from ${CMD_PATH} ..."
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            go build -v -o ${OUTPUT_FILE_EXE} ${CMD_PATH}
+            ACTUAL_BUILT_FILE=${OUTPUT_FILE_EXE}
+          else
+            go build -v -o ${OUTPUT_FILE_NO_EXT} ${CMD_PATH}
+            ACTUAL_BUILT_FILE=${OUTPUT_FILE_NO_EXT}
+          fi
           
-          echo "Building $OUTPUT_FILE..."
-          go build -v -o ./bin/${OUTPUT_FILE} ./cmd/user-prompt-mcp/
-          
+          echo "Built file: ${ACTUAL_BUILT_FILE}"
+
           # Generate checksum before compression
+          echo "Generating checksum for ${ACTUAL_BUILT_FILE}..."
           cd ./bin
-          sha256sum ${OUTPUT_FILE} > ${OUTPUT_FILE}.sha256
+          sha256sum ${ACTUAL_BUILT_FILE##*/} > ${ACTUAL_BUILT_FILE##*/}.sha256
+          cd ..
           
           # Compress binary
-          echo "Compressing $OUTPUT_FILE..."
-          if [[ "${{ matrix.goos }}" == "darwin" || "${{ matrix.goos }}" == "linux" ]]; then
-            gzip -9 -c ${OUTPUT_FILE} > ${OUTPUT_FILE}.gz
+          echo "Compressing ${ACTUAL_BUILT_FILE}..."
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            gzip -9 -c ${ACTUAL_BUILT_FILE} > ${ACTUAL_BUILT_FILE}.gz
+            COMPRESSED_FILE_PATH=${ACTUAL_BUILT_FILE}.gz
+          else
+            gzip -9 -c ${ACTUAL_BUILT_FILE} > ${ACTUAL_BUILT_FILE}.gz
+            COMPRESSED_FILE_PATH=${ACTUAL_BUILT_FILE}.gz
           fi
+          echo "Compressed file: ${COMPRESSED_FILE_PATH}"
 
-      - name: Upload binary as artifact
+      - name: Upload binary artifact (${{ matrix.binary_name }}-${{ matrix.goos }}-${{ matrix.goarch }}.gz)
         uses: actions/upload-artifact@v4
         with:
-          name: binary-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ./bin/user-prompt-mcp-${{ matrix.goos }}-${{ matrix.goarch }}.gz
+          name: binary-${{ matrix.binary_name }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ./bin/${{ matrix.binary_name }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}.gz
           
-      - name: Upload checksum as artifact
+      - name: Upload checksum artifact (${{ matrix.binary_name }}-${{ matrix.goos }}-${{ matrix.goarch }}.sha256)
         uses: actions/upload-artifact@v4
         with:
-          name: checksum-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: ./bin/user-prompt-mcp-${{ matrix.goos }}-${{ matrix.goarch }}.sha256
+          name: checksum-${{ matrix.binary_name }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: ./bin/${{ matrix.binary_name }}-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.goos == 'windows' && '.exe' || '' }}.sha256
 
   attach-to-release:
     name: Attach binaries to release
@@ -82,15 +102,18 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: ./artifacts
+          path: ./artifacts # All artifacts will be downloaded here, structured by their upload name
           
-      - name: List artifacts
+      - name: List artifacts downloaded
         run: find ./artifacts -type f | sort
         
       - name: Prepare release files
         run: |
           mkdir -p ./release-files
-          find ./artifacts -type f -name "user-prompt-mcp-*" -exec cp {} ./release-files/ \;
+          # Iterate over each artifact directory created by download-artifact
+          # and copy its contents (the actual files) to release-files
+          find ./artifacts -mindepth 2 -type f \( -name "user-prompt-mcp-*" -o -name "user-prompt-server-*" \) -exec cp {} ./release-files/ \;
+          echo "Files prepared for release:"
           find ./release-files -type f | sort
       
       - name: Determine tag to use

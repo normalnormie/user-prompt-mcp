@@ -36,8 +36,6 @@ By participating in this project, you agree to abide by its Code of Conduct. Ple
 
 2. Install dependencies:
    - Go 1.18 or higher
-   - Linux: zenity
-   - macOS: osascript (built-in)
 
 3. Build the project:
    ```bash

@@ -56,11 +56,7 @@ We chose mark3labs/mcp-go because:
 - Larger community
 
 ### GUI Implementation
-We implemented the GUI using:
-- **Zenity** for Linux: Simple shell utility for GUI dialogs
-- **osascript** for macOS: Built-in Apple Script support for dialogs
-
-This approach provides a lightweight solution with minimal dependencies that works across platforms.
+The primary GUI mechanism is Vibeframe web UI, accessed via `RemoteDialog` which communicates with the `user-prompt-server`.
 
 ## Implementation Details
 
@@ -70,11 +66,12 @@ We implemented a "user_prompt" tool that can be called by Cursor to request addi
 - `title`: The title of the dialog window (optional)
 
 ### GUI Implementation
-We created a cross-platform GUI implementation that uses:
-- Zenity on Linux
-- AppleScript on macOS
+We created a cross-platform GUI strategy. The main approach is:
+- **Vibeframe Web UI**: A web-based interface served by `cmd/user-prompt-server/main.go`.
+- **RemoteDialog**: A `DialogProvider` in `pkg/gui/remote_dialog.go` that makes HTTP calls to the Vibeframe server.
+- **Default Configuration**: The `user-prompt-mcp` client now defaults to using `RemoteDialog` to connect to the Vibeframe server for prompts.
 
-It displays a simple dialog box with a text input field.
+This displays a dialog within a web page, with input handled by the Vibeframe server.
 
 ### Timeout Handling
 The prompt service includes timeout handling to prevent the MCP server from hanging indefinitely if the user doesn't respond. The default timeout is 20 minutes and can be customized through:
@@ -113,4 +110,10 @@ We've successfully implemented a minimal but functional MCP server for user inpu
 ## Next Steps
 1. Set up initial project structure and implement a basic MCP server
 2. Implement user prompt tool with simple GUI
-3. Test with Cursor and refine as needed 
+3. Test with Cursor and refine as needed
+
+## Future Enhancements
+- An option to keep the text in the textarea after the user submits the input.
+- Support attaching images to prompts.
+- Support different types of prompts (e.g., multiple choice).
+- Integrate with external LLM routers. 
